@@ -1,0 +1,27 @@
+name: Deploy to EdgeOne
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: npm install -g edgeone@1.6.42
+      - run: npm run build
+      - run: edgeone makers deploy dist -n kartika-cyber-opsec-guard -t "$EDGEONE_API_TOKEN"
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}

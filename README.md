@@ -36,3 +36,17 @@ edgeone login                              # pilih Global, selesaikan di browser
 edgeone makers dev                         # uji lokal lengkap dengan edge function di http://localhost:8088
 npm run deploy                             # build ke dist/ lalu deploy hanya file publik
 ```
+
+### Deploy otomatis dari GitHub
+
+Setiap push ke `main` menjalankan [.github/workflows/deploy.yml](.github/workflows/deploy.yml): tes, build, lalu deploy ke project EdgeOne `kartika-cyber-opsec-guard`. Butuh satu secret repo:
+
+```bash
+gh secret set EDGEONE_API_TOKEN --repo itprojectsmekisa/kartika-cyber-opsec-guard
+```
+
+Penjelasan AI butuh API key Makers AI Gateway (konsol Makers → Models → API Key) di environment project:
+
+```bash
+edgeone makers env set MAKERS_MODELS_KEY <key>
+```
