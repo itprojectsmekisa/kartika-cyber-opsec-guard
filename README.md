@@ -16,7 +16,7 @@ Asisten AI pencegah kebocoran informasi prajurit di media sosial. Foto diperiksa
 | `core.js`, `core.test.js` | Logika murni: dekode YOLO, pencocokan teks, penilaian risiko, dan tesnya |
 | `model/classes.json` | Daftar kelas deteksi, label, dan bobot risiko (sumber tunggal untuk export, app, dan function) |
 | `model/model.onnx.part*` | Model hasil export, dipecah karena batas 25 MB per file di EdgeOne |
-| `edge-functions/api/explain/` | Endpoint `/api/explain` yang memanggil DeepSeek |
+| `cloud-functions/api/explain/` | Endpoint `/api/explain` yang memanggil DeepSeek |
 | `scripts/export_model.py` | Export YOLO-World + prompt kelas ke ONNX |
 
 ## Menjalankan

@@ -116,22 +116,10 @@ async function explain(result) {
       signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) throw new Error(res.status);
-    const text = await readSse(res);
-    return text || explainFallback(result);
+    return (await res.json()).text || explainFallback(result);
   } catch {
     return explainFallback(result);
   }
-}
-
-// OpenAI-style SSE: lines of `data: {"choices":[{"delta":{"content":"..."}}]}`.
-async function readSse(res) {
-  const raw = await res.text();
-  let text = '';
-  for (const line of raw.split('\n')) {
-    if (!line.startsWith('data:') || line.includes('[DONE]')) continue;
-    try { text += JSON.parse(line.slice(5)).choices?.[0]?.delta?.content ?? ''; } catch { /* partial keep-alive line */ }
-  }
-  return text.trim();
 }
 
 function canvas(w, h) {

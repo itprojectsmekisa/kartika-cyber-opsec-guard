@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "build": "rm -rf dist && mkdir dist && cp -R index.html app.js core.js model edge-functions dist/ && echo '{\"type\":\"module\"}' > dist/package.json",
+    "build": "rm -rf dist && mkdir dist && cp -R index.html app.js core.js model cloud-functions dist/ && echo '{\"type\":\"module\"}' > dist/package.json",
     "deploy": "npm run build && edgeone makers deploy dist -n kartika-cyber-opsec-guard"
   }
 }
