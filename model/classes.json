@@ -1,0 +1,16 @@
+[
+  { "prompt": "rifle", "label": "Senjata laras panjang", "severity": 3 },
+  { "prompt": "handgun", "label": "Senjata genggam", "severity": 3 },
+  { "prompt": "tank", "label": "Tank / kendaraan lapis baja", "severity": 3 },
+  { "prompt": "military truck", "label": "Truk militer", "severity": 3 },
+  { "prompt": "military helicopter", "label": "Helikopter militer", "severity": 3 },
+  { "prompt": "document", "label": "Dokumen / kertas berisi tulisan", "severity": 3 },
+  { "prompt": "map", "label": "Peta", "severity": 3 },
+  { "prompt": "computer monitor", "label": "Layar komputer", "severity": 2 },
+  { "prompt": "laptop", "label": "Laptop", "severity": 2 },
+  { "prompt": "license plate", "label": "Pelat nomor kendaraan", "severity": 2 },
+  { "prompt": "signboard", "label": "Papan nama / plang", "severity": 2 },
+  { "prompt": "name tag", "label": "Tanda nama (name tag)", "severity": 2 },
+  { "prompt": "military uniform", "label": "Seragam militer", "severity": 1, "blur": false },
+  { "prompt": "face", "label": "Wajah", "severity": 1 }
+]

@@ -1,0 +1,14 @@
+.venv/
+node_modules/
+*.pt
+*.onnx
+.DS_Store
+dist/
+
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*
+  
+# Local agent skills (third-party, not part of the app)
+.claude/
