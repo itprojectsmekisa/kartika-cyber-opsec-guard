@@ -7,31 +7,75 @@ const status = (text) => { $('status').textContent = text; };
 
 const classes = await fetch('model/classes.json').then(r => r.json());
 const sessionPromise = loadModel();
-sessionPromise.then(() => status('Siap. Pilih foto untuk diperiksa.'), (e) => status(`Model gagal dimuat: ${e.message}`));
+sessionPromise.then(() => { $('progress').hidden = true; status('Siap. Pilih foto atau coba contoh.'); },
+  (e) => status(`Model gagal dimuat: ${e.message}. Muat ulang halaman untuk mencoba lagi.`));
 
 // shortcut: whole model (~50 MB) downloads on first visit, fine for demo on Wi-Fi; switch to a trained YOLO11n (~10 MB) after week 2.
 async function loadModel() {
   const index = await fetch('model/parts.json');
   if (!index.ok) throw new Error('file model belum tersedia (jalankan scripts/export_model.py)');
   const count = await index.json();
+  const loaded = [], total = [];
+  const report = () => {
+    const done = loaded.reduce((a, b) => a + b, 0), all = total.reduce((a, b) => a + b, 0);
+    if (!all) return;
+    $('progress').value = done / all;
+    status(`Memuat model AI… ${Math.round((done / all) * 100)}% (sekali saja, lalu tersimpan di browser)`);
+  };
   const parts = await Promise.all([...Array(count).keys()].map(async (i) => {
     const res = await fetch(`model/model.onnx.part${i}`);
     if (!res.ok) throw new Error(`bagian model ${i} tidak ditemukan`);
-    return new Uint8Array(await res.arrayBuffer());
+    total[i] = Number(res.headers.get('Content-Length')) || 0;
+    loaded[i] = 0;
+    const chunks = [];
+    for (const reader = res.body.getReader(); ;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded[i] += value.length;
+      report();
+    }
+    return chunks;
   }));
-  const model = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
-  parts.reduce((offset, p) => (model.set(p, offset), offset + p.length), 0);
+  const flat = parts.flat();
+  const model = new Uint8Array(flat.reduce((n, c) => n + c.length, 0));
+  flat.reduce((offset, c) => (model.set(c, offset), offset + c.length), 0);
+  status('Menyiapkan model AI…');
   return ort.InferenceSession.create(model, { executionProviders: ['wasm'] });
 }
 
-$('file').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+async function run(file) {
+  if (document.body.classList.contains('busy')) return;
+  document.body.classList.add('busy');
+  document.querySelectorAll('.sample').forEach(b => { b.disabled = true; });
   try {
     await analyze(file);
   } catch (err) {
     status(`Gagal memeriksa foto: ${err.message}`);
+  } finally {
+    document.body.classList.remove('busy');
+    document.querySelectorAll('.sample').forEach(b => { b.disabled = false; });
+    $('file').value = ''; // lets the same photo be picked again
   }
+}
+
+$('file').addEventListener('change', (e) => e.target.files[0] && run(e.target.files[0]));
+
+for (const btn of document.querySelectorAll('.sample')) {
+  btn.addEventListener('click', async () => {
+    const blob = await fetch(btn.dataset.src).then(r => r.blob());
+    run(new File([blob], btn.dataset.src.split('/').pop(), { type: blob.type }));
+  });
+}
+
+const drop = $('drop');
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', (e) => {
+  e.preventDefault();
+  drop.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file?.type.startsWith('image/')) run(file);
 });
 
 async function analyze(file) {
@@ -50,9 +94,13 @@ async function analyze(file) {
 
   const result = assessRisk({ detections, classes, textHits: matchText(words), gps });
   render(base, result);
-  status('Selesai.');
+  status(`Selesai: ${result.findings.length} temuan.`);
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('verdict-title').focus({ preventScroll: true });
+  $('explain-box').classList.add('loading');
   $('explain').textContent = 'Menyusun penjelasan…';
   $('explain').textContent = await explain(result);
+  $('explain-box').classList.remove('loading');
 }
 
 async function detect(base) {
@@ -81,8 +129,10 @@ function render(base, { level, findings }) {
   $('result').hidden = false;
   $('level').textContent = `RISIKO ${level}`;
   $('level').className = `badge ${level}`;
-  $('findings').replaceChildren(...(findings.length ? findings : [{ label: 'Tidak ada temuan', detail: '' }]).map(f => {
+  const sorted = [...findings].sort((x, y) => y.severity - x.severity);
+  $('findings').replaceChildren(...(sorted.length ? sorted : [{ label: 'Tidak ada temuan', detail: '' }]).map(f => {
     const li = document.createElement('li');
+    li.dataset.sev = f.severity ?? 0;
     li.append(f.label, ' ');
     li.appendChild(document.createElement('small')).textContent = f.detail;
     return li;
@@ -91,11 +141,19 @@ function render(base, { level, findings }) {
   const annotated = copyInto($('annotated'), base);
   const a = annotated.getContext('2d');
   a.lineWidth = Math.max(2, base.width / 300);
-  a.font = `${Math.max(14, base.width / 50)}px system-ui`;
+  const size = Math.max(14, base.width / 50);
+  a.font = `600 ${size}px system-ui`;
   for (const f of findings.filter(f => f.box)) {
-    a.strokeStyle = a.fillStyle = f.severity >= 3 ? '#e53935' : f.severity === 2 ? '#fb8c00' : '#fdd835';
+    const color = f.severity >= 3 ? '#e53935' : f.severity === 2 ? '#fb8c00' : '#fdd835';
+    a.strokeStyle = color;
     a.strokeRect(f.box.x, f.box.y, f.box.w, f.box.h);
-    a.fillText(f.label, f.box.x, Math.max(16, f.box.y - 4));
+    // Label on a solid tag so it stays readable on busy photos.
+    const pad = size * 0.3, w = a.measureText(f.label).width + pad * 2, h = size + pad * 2;
+    const y = f.box.y >= h ? f.box.y - h : f.box.y;
+    a.fillStyle = color;
+    a.fillRect(f.box.x, y, w, h);
+    a.fillStyle = f.severity === 1 ? '#000' : '#fff';
+    a.fillText(f.label, f.box.x + pad, y + pad + size * 0.85);
   }
 
   // Re-encoding through canvas drops all EXIF metadata, including GPS.

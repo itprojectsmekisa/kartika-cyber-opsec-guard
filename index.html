@@ -6,64 +6,160 @@
   <title>Kartika Cyber OPSEC Guard</title>
   <meta name="description" content="Periksa foto sebelum diunggah ke media sosial. Analisis berjalan di perangkat Anda.">
   <style>
-    :root { --bg: #f4f5f0; --card: #fff; --ink: #1d2318; --muted: #5d6656; --line: #d9ddd2; --accent: #3f5a2a;
-      --aman: #2f7d32; --rendah: #6b8e23; --sedang: #c77700; --tinggi: #b3261e; }
+    :root {
+      --bg: #f3f4ee; --card: #ffffff; --sunken: #eceee6; --ink: #1b2116; --muted: #5a6352; --line: #d7dbcf;
+      --accent: #3d5a27; --accent-ink: #ffffff; --ring: #6f9a4a;
+      --aman: #2e7d32; --rendah: #5f7f1e; --sedang: #b26a00; --tinggi: #b3261e;
+      --shadow: 0 1px 2px rgb(20 25 15 / .06), 0 4px 12px rgb(20 25 15 / .06);
+      --outline: rgb(0 0 0 / .1);
+    }
     @media (prefers-color-scheme: dark) {
-      :root { --bg: #14170f; --card: #1e2318; --ink: #e8ebe3; --muted: #a3ab9a; --line: #343b2c; --accent: #9cbf7a; }
+      :root {
+        --bg: #12150e; --card: #1b2016; --sunken: #232a1c; --ink: #e8ebe2; --muted: #a2ab98; --line: #333b2a;
+        --accent: #9cc27a; --accent-ink: #12150e; --ring: #9cc27a;
+        --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 4px 12px rgb(0 0 0 / .25);
+        --outline: rgb(255 255 255 / .1);
+      }
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
-    h1 { font-size: 1.5rem; margin: 0 0 4px; }
-    .sub { color: var(--muted); margin: 0 0 20px; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    .pick { display: block; text-align: center; padding: 28px 16px; border: 2px dashed var(--line); border-radius: 12px; cursor: pointer; font-weight: 600; }
-    .pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
-    .pick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-    #status { color: var(--muted); min-height: 1.5em; margin: 12px 0 0; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .04em; }
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 980px; margin: 0 auto; padding: 32px 16px 56px; }
+    h1, h2 { text-wrap: balance; line-height: 1.2; }
+    p, li { text-wrap: pretty; }
+    :focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+
+    /* Header */
+    .eyebrow { margin: 0 0 6px; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+    h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 8px; }
+    .lede { color: var(--muted); margin: 0 0 16px; max-width: 60ch; }
+    .checks { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 24px; list-style: none; }
+    .checks li { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: .875rem; }
+
+    /* Cards: radius 16 with 16px padding, inner surfaces use 8 (treated as separate layers) */
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+    .stack > * + * { margin-top: 16px; }
+
+    /* Picker */
+    .pick { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      min-height: 152px; padding: 24px 16px; border: 2px dashed var(--line); border-radius: 12px; background: var(--sunken);
+      cursor: pointer; text-align: center; transition-property: border-color, background-color, transform; transition-duration: 150ms; transition-timing-function: ease-out; }
+    .pick:hover, .pick.drag { border-color: var(--accent); }
+    .pick:active { transform: scale(.99); }
+    .pick:focus-within { outline: 3px solid var(--ring); outline-offset: 2px; }
+    .pick strong { font-size: 1.05rem; }
+    .pick span { color: var(--muted); font-size: .875rem; }
+    .pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .busy .pick { opacity: .6; pointer-events: none; }
+
+    .samples { margin-top: 16px; }
+    .samples p { margin: 0 0 8px; font-size: .875rem; color: var(--muted); }
+    .sample-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .sample { display: flex; flex-direction: column; gap: 6px; min-height: 44px; padding: 6px; border: 1px solid var(--line); border-radius: 12px;
+      background: var(--card); color: var(--ink); font: inherit; font-size: .8125rem; text-align: left; cursor: pointer;
+      transition-property: border-color, transform; transition-duration: 150ms; transition-timing-function: ease-out; }
+    .sample:hover { border-color: var(--accent); }
+    .sample:active { transform: scale(.97); }
+    .sample:disabled { opacity: .5; cursor: progress; }
+    .sample img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; outline: 1px solid var(--outline); outline-offset: -1px; }
+
+    .status { display: flex; align-items: center; gap: 12px; margin-top: 16px; min-height: 24px; color: var(--muted); font-size: .9375rem; }
+    progress { flex: 0 0 120px; height: 8px; appearance: none; border: 0; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+    progress::-webkit-progress-bar { background: var(--sunken); }
+    progress::-webkit-progress-value { background: var(--accent); }
+    progress::-moz-progress-bar { background: var(--accent); }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* Result */
+    #result { margin-top: 24px; animation: enter 220ms ease-out; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } }
+    .verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .verdict h2 { margin: 0; font-size: 1.25rem; outline: none; }
+    .badge { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 14px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; font-size: .875rem; }
     .AMAN { background: var(--aman); } .RENDAH { background: var(--rendah); } .SEDANG { background: var(--sedang); } .TINGGI { background: var(--tinggi); }
-    ul { padding-left: 20px; margin: 12px 0; }
-    li small { color: var(--muted); }
-    canvas { width: 100%; height: auto; border-radius: 8px; display: block; }
-    h2 { font-size: 1.05rem; margin: 0 0 8px; }
-    a.btn { display: inline-block; margin-top: 12px; padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--bg); text-decoration: none; font-weight: 600; }
-    .privacy { color: var(--muted); font-size: .875rem; }
+    #findings { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
+    #findings li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 10px 12px; border-radius: 8px; background: var(--sunken); }
+    #findings li::before { content: ""; flex: 0 0 10px; height: 10px; border-radius: 50%; background: var(--muted); transform: translateY(1px); }
+    #findings li[data-sev="3"]::before { background: var(--tinggi); }
+    #findings li[data-sev="2"]::before { background: var(--sedang); }
+    #findings li[data-sev="1"]::before { background: var(--rendah); }
+    #findings small { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .explain { margin: 16px 0 0; padding: 12px 14px; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; background: var(--sunken); }
+    .explain h3 { margin: 0 0 4px; font-size: .8125rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .explain p { margin: 0; }
+    .explain.loading p { color: var(--muted); }
+
+    .compare { display: grid; gap: 16px; margin-top: 16px; }
+    @media (min-width: 760px) { .compare { grid-template-columns: 1fr 1fr; } }
+    .compare h2 { font-size: 1rem; margin: 0 0 8px; }
+    canvas { display: block; width: 100%; height: auto; border-radius: 8px; outline: 1px solid var(--outline); outline-offset: -1px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; padding: 10px 18px; border-radius: 10px;
+      background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none;
+      transition-property: transform, background-color; transition-duration: 150ms; transition-timing-function: ease-out; }
+    .btn:active { transform: scale(.97); }
+
+    .privacy { margin-top: 24px; color: var(--muted); font-size: .8125rem; }
     [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition-duration: 0ms !important; } }
   </style>
 </head>
 <body>
   <main>
-    <h1>Kartika Cyber OPSEC Guard</h1>
-    <p class="sub">Periksa foto sebelum diunggah ke media sosial. Deteksi berjalan di perangkat Anda; foto tidak dikirim ke server.</p>
+    <header>
+      <p class="eyebrow">Kartika Cyber Hackathon 2026</p>
+      <h1>OPSEC Guard</h1>
+      <p class="lede">Periksa foto sebelum diunggah ke media sosial. AI mencari informasi yang bisa dimanfaatkan lawan, langsung di perangkat Anda. Foto tidak dikirim ke server.</p>
+      <ul class="checks" aria-label="Yang diperiksa">
+        <li>🎯 Senjata, kendaraan, dokumen</li>
+        <li>🔤 Tulisan rahasia & nama satuan</li>
+        <li>📍 Lokasi GPS di file foto</li>
+      </ul>
+    </header>
 
-    <div class="card">
-      <label class="pick">
-        📷 Ambil atau pilih foto
+    <section id="picker" class="card" aria-labelledby="pick-title">
+      <label class="pick" id="drop">
+        <strong id="pick-title">📷 Ambil atau pilih foto</strong>
+        <span>Ketuk untuk memotret, atau seret foto ke sini</span>
         <input id="file" type="file" accept="image/*">
       </label>
-      <p id="status" role="status" aria-live="polite">Memuat model AI…</p>
-    </div>
-
-    <section id="result" hidden>
-      <div class="card">
-        <span id="level" class="badge"></span>
-        <ul id="findings"></ul>
-        <h2>Penjelasan AI</h2>
-        <p id="explain"></p>
+      <div class="samples">
+        <p>Belum punya foto? Coba contoh:</p>
+        <div class="sample-row">
+          <button class="sample" type="button" data-src="samples/dokumen-rahasia-gps.jpg"><img src="samples/dokumen-rahasia-gps.jpg" alt="" loading="lazy">Dokumen + GPS</button>
+          <button class="sample" type="button" data-src="samples/soldier-rifle-pd.jpg"><img src="samples/soldier-rifle-pd.jpg" alt="" loading="lazy">Prajurit bersenjata</button>
+          <button class="sample" type="button" data-src="samples/tank-pd.jpg"><img src="samples/tank-pd.jpg" alt="" loading="lazy">Kendaraan tempur</button>
+        </div>
       </div>
-      <div class="card">
-        <h2>Temuan pada foto</h2>
-        <canvas id="annotated" aria-label="Foto dengan kotak penanda temuan"></canvas>
-      </div>
-      <div class="card">
-        <h2>Versi aman</h2>
-        <canvas id="safe" aria-label="Foto dengan bagian sensitif disamarkan dan lokasi GPS dihapus"></canvas>
-        <a id="download" class="btn" download="foto-aman.jpg">Unduh versi aman</a>
+      <div class="status">
+        <progress id="progress" max="1" value="0" aria-label="Memuat model AI"></progress>
+        <span id="status" role="status" aria-live="polite">Memuat model AI…</span>
       </div>
     </section>
 
-    <p class="privacy">Yang dikirim ke server hanya daftar jenis temuan (tanpa foto dan tanpa koordinat) untuk dibuatkan penjelasan.</p>
+    <section id="result" class="card" hidden aria-labelledby="verdict-title">
+      <div class="verdict">
+        <h2 id="verdict-title" tabindex="-1">Hasil pemeriksaan</h2>
+        <span id="level" class="badge"></span>
+      </div>
+      <ul id="findings"></ul>
+      <div id="explain-box" class="explain" aria-live="polite">
+        <h3>Penjelasan AI</h3>
+        <p id="explain"></p>
+      </div>
+      <div class="compare">
+        <div>
+          <h2>Temuan pada foto</h2>
+          <canvas id="annotated" aria-label="Foto dengan kotak penanda temuan"></canvas>
+        </div>
+        <div>
+          <h2>Versi aman untuk diunggah</h2>
+          <canvas id="safe" aria-label="Foto dengan bagian sensitif disamarkan dan lokasi GPS dihapus"></canvas>
+          <a id="download" class="btn" download="foto-aman.jpg">⬇ Unduh versi aman</a>
+        </div>
+      </div>
+    </section>
+
+    <p class="privacy">Yang dikirim ke server hanya daftar jenis temuan (tanpa foto dan tanpa koordinat) untuk dibuatkan penjelasan. Foto contoh: buatan sendiri dan Wikimedia Commons (domain publik).</p>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js" integrity="sha384-RPL/K8tc0JVaNWsunkEmCzLeieefvFX2UCRLKLmLVChCI6P+CTKhzqF7VIeCc3Zp" crossorigin="anonymous"></script>
