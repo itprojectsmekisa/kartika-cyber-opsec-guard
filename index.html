@@ -3,164 +3,211 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kartika Cyber OPSEC Guard</title>
+  <title>OPSEC Guard</title>
   <meta name="description" content="Periksa foto sebelum diunggah ke media sosial. Analisis berjalan di perangkat Anda.">
   <style>
     :root {
-      --bg: #f3f4ee; --card: #ffffff; --sunken: #eceee6; --ink: #1b2116; --muted: #5a6352; --line: #d7dbcf;
-      --accent: #3d5a27; --accent-ink: #ffffff; --ring: #6f9a4a;
-      --aman: #2e7d32; --rendah: #5f7f1e; --sedang: #b26a00; --tinggi: #b3261e;
-      --shadow: 0 1px 2px rgb(20 25 15 / .06), 0 4px 12px rgb(20 25 15 / .06);
+      --paper: #f4f3ee; --surface: #fbfaf7; --ink: #15171a; --ink-2: #3d4146; --muted: #6d7176; --rule: #d8d6ce; --rule-strong: #15171a;
+      --tinggi: #c4321c; --sedang: #b87100; --rendah: #5d6f22; --aman: #2c6a3c;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       --outline: rgb(0 0 0 / .1);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #12150e; --card: #1b2016; --sunken: #232a1c; --ink: #e8ebe2; --muted: #a2ab98; --line: #333b2a;
-        --accent: #9cc27a; --accent-ink: #12150e; --ring: #9cc27a;
-        --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 4px 12px rgb(0 0 0 / .25);
+        --paper: #101113; --surface: #16171a; --ink: #ecebe5; --ink-2: #c2c1bb; --muted: #8b8c8f; --rule: #2a2b2f; --rule-strong: #ecebe5;
+        --tinggi: #ef5b43; --sedang: #e09a2b; --rendah: #9db355; --aman: #5fae73;
         --outline: rgb(255 255 255 / .1);
       }
     }
     * { box-sizing: border-box; }
     html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    main { max-width: 980px; margin: 0 auto; padding: 32px 16px 56px; }
-    h1, h2 { text-wrap: balance; line-height: 1.2; }
-    p, li { text-wrap: pretty; }
-    :focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
-
-    /* Header */
-    .eyebrow { margin: 0 0 6px; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-    h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 8px; }
-    .lede { color: var(--muted); margin: 0 0 16px; max-width: 60ch; }
-    .checks { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0 0 24px; list-style: none; }
-    .checks li { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: .875rem; }
-
-    /* Cards: radius 16 with 16px padding, inner surfaces use 8 (treated as separate layers) */
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
-    .stack > * + * { margin-top: 16px; }
-
-    /* Picker */
-    .pick { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-      min-height: 152px; padding: 24px 16px; border: 2px dashed var(--line); border-radius: 12px; background: var(--sunken);
-      cursor: pointer; text-align: center; transition-property: border-color, background-color, transform; transition-duration: 150ms; transition-timing-function: ease-out; }
-    .pick:hover, .pick.drag { border-color: var(--accent); }
-    .pick:active { transform: scale(.99); }
-    .pick:focus-within { outline: 3px solid var(--ring); outline-offset: 2px; }
-    .pick strong { font-size: 1.05rem; }
-    .pick span { color: var(--muted); font-size: .875rem; }
-    .pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .busy .pick { opacity: .6; pointer-events: none; }
-
-    .samples { margin-top: 16px; }
-    .samples p { margin: 0 0 8px; font-size: .875rem; color: var(--muted); }
-    .sample-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .sample { display: flex; flex-direction: column; gap: 6px; min-height: 44px; padding: 6px; border: 1px solid var(--line); border-radius: 12px;
-      background: var(--card); color: var(--ink); font: inherit; font-size: .8125rem; text-align: left; cursor: pointer;
-      transition-property: border-color, transform; transition-duration: 150ms; transition-timing-function: ease-out; }
-    .sample:hover { border-color: var(--accent); }
-    .sample:active { transform: scale(.97); }
-    .sample:disabled { opacity: .5; cursor: progress; }
-    .sample img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; outline: 1px solid var(--outline); outline-offset: -1px; }
-
-    .status { display: flex; align-items: center; gap: 12px; margin-top: 16px; min-height: 24px; color: var(--muted); font-size: .9375rem; }
-    progress { flex: 0 0 120px; height: 8px; appearance: none; border: 0; border-radius: 999px; background: var(--sunken); overflow: hidden; }
-    progress::-webkit-progress-bar { background: var(--sunken); }
-    progress::-webkit-progress-value { background: var(--accent); }
-    progress::-moz-progress-bar { background: var(--accent); }
-    .num { font-variant-numeric: tabular-nums; }
-
-    /* Result */
-    #result { margin-top: 24px; animation: enter 220ms ease-out; }
-    @keyframes enter { from { opacity: 0; transform: translateY(8px); } }
-    .verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-    .verdict h2 { margin: 0; font-size: 1.25rem; outline: none; }
-    .badge { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 14px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; font-size: .875rem; }
-    .AMAN { background: var(--aman); } .RENDAH { background: var(--rendah); } .SEDANG { background: var(--sedang); } .TINGGI { background: var(--tinggi); }
-    #findings { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
-    #findings li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 10px 12px; border-radius: 8px; background: var(--sunken); }
-    #findings li::before { content: ""; flex: 0 0 10px; height: 10px; border-radius: 50%; background: var(--muted); transform: translateY(1px); }
-    #findings li[data-sev="3"]::before { background: var(--tinggi); }
-    #findings li[data-sev="2"]::before { background: var(--sedang); }
-    #findings li[data-sev="1"]::before { background: var(--rendah); }
-    #findings small { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .explain { margin: 16px 0 0; padding: 12px 14px; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; background: var(--sunken); }
-    .explain h3 { margin: 0 0 4px; font-size: .8125rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-    .explain p { margin: 0; }
-    .explain.loading p { color: var(--muted); }
-
-    .compare { display: grid; gap: 16px; margin-top: 16px; }
-    @media (min-width: 760px) { .compare { grid-template-columns: 1fr 1fr; } }
-    .compare h2 { font-size: 1rem; margin: 0 0 8px; }
-    canvas { display: block; width: 100%; height: auto; border-radius: 8px; outline: 1px solid var(--outline); outline-offset: -1px; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 12px; padding: 10px 18px; border-radius: 10px;
-      background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none;
-      transition-property: transform, background-color; transition-duration: 150ms; transition-timing-function: ease-out; }
-    .btn:active { transform: scale(.97); }
-
-    .privacy { margin-top: 24px; color: var(--muted); font-size: .8125rem; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--sans); }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    h1, h2, h3 { margin: 0; text-wrap: balance; }
+    p { margin: 0; text-wrap: pretty; }
+    .mono { font-family: var(--mono); font-size: .75rem; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
     [hidden] { display: none !important; }
+
+    /* Top bar */
+    .bar { display: flex; justify-content: space-between; align-items: center; height: 56px; border-bottom: 1px solid var(--rule); }
+    .mark { font-weight: 700; letter-spacing: -.01em; }
+    .mark span { color: var(--muted); font-weight: 400; }
+
+    /* Intro */
+    .intro { display: grid; gap: 28px; padding: 48px 0 32px; }
+    @media (min-width: 860px) { .intro { grid-template-columns: 5fr 7fr; gap: 56px; align-items: end; } }
+    h1 { font-size: clamp(2.1rem, 5.2vw, 3.4rem); line-height: 1.02; letter-spacing: -.035em; font-weight: 700; }
+    .intro p { color: var(--ink-2); max-width: 46ch; margin-top: 16px; }
+    .scope { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule-strong); }
+    .scope div { padding: 12px 12px 0 0; }
+    .scope div + div { padding-left: 12px; border-left: 1px solid var(--rule); }
+    .scope b { display: block; font-size: .9375rem; margin: 4px 0 2px; }
+    .scope span { color: var(--muted); font-size: .8125rem; line-height: 1.4; display: block; }
+
+    /* Viewfinder drop zone */
+    .finder { position: relative; display: grid; place-items: center; min-height: 260px; padding: 32px 20px; background: var(--surface); cursor: pointer;
+      --c: var(--ink-2); --l: 22px;
+      background-image:
+        linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+        linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c));
+      background-repeat: no-repeat;
+      background-size: var(--l) 2px, 2px var(--l), var(--l) 2px, 2px var(--l), var(--l) 2px, 2px var(--l), var(--l) 2px, 2px var(--l);
+      background-position: 0 0, 0 0, 100% 0, 100% 0, 0 100%, 0 100%, 100% 100%, 100% 100%;
+      transition-property: background-color; transition-duration: 150ms; transition-timing-function: ease-out; }
+    .finder:hover, .finder.drag { --c: var(--ink); }
+    .finder.drag { background-color: color-mix(in srgb, var(--surface) 80%, var(--ink) 4%); }
+    .finder:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
+    .finder input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .finder-body { text-align: center; pointer-events: none; }
+    .finder-body h2 { font-size: 1.25rem; letter-spacing: -.015em; }
+    .finder-body p { color: var(--muted); margin-top: 6px; font-size: .9375rem; }
+    .cta { display: inline-flex; align-items: center; min-height: 44px; margin-top: 18px; padding: 0 20px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: .9375rem;
+      transition-property: transform; transition-duration: 120ms; transition-timing-function: ease-out; }
+    .finder:active .cta { transform: scale(.97); }
+    .busy .finder { cursor: progress; }
+    .busy .finder input { pointer-events: none; }
+    .readout { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; color: var(--muted); pointer-events: none; }
+    progress { position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; appearance: none; border: 0; background: transparent; }
+    progress::-webkit-progress-bar { background: transparent; }
+    progress::-webkit-progress-value { background: var(--ink); }
+    progress::-moz-progress-bar { background: var(--ink); }
+
+    .samples { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px 20px; padding: 16px 0 0; }
+    .samples > .mono { color: var(--muted); }
+    @media (max-width: 520px) { .samples { grid-template-columns: 1fr; gap: 4px; } }
+    .touch { display: none; }
+    @media (hover: none) and (pointer: coarse) { .fine { display: none; } .touch { display: inline; } }
+    .sample-row { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+    .sample { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: .875rem; cursor: pointer; }
+    .sample img { width: 44px; height: 44px; object-fit: cover; outline: 1px solid var(--outline); outline-offset: -1px; filter: grayscale(1); transition-property: filter; transition-duration: 150ms; }
+    .sample:hover img, .sample:focus-visible img { filter: none; }
+    .sample span { border-bottom: 1px solid var(--rule); transition-property: border-color; transition-duration: 150ms; }
+    .sample:hover span { border-color: var(--ink); }
+    .sample:disabled { opacity: .45; cursor: progress; }
+    .sample .mono { color: var(--muted); border: 0; }
+
+    /* Report */
+    #result { padding: 48px 0 8px; border-top: 1px solid var(--rule-strong); margin-top: 40px; animation: enter 240ms ease-out; }
+    @keyframes enter { from { opacity: 0; transform: translateY(6px); } }
+    .report-head { display: grid; gap: 20px; }
+    @media (min-width: 860px) { .report-head { grid-template-columns: 5fr 7fr; gap: 56px; } }
+    .verdict { outline: none; }
+    .verdict .mono { color: var(--muted); display: block; margin-bottom: 6px; }
+    #level { display: block; font-size: clamp(2.6rem, 7vw, 4.2rem); line-height: .95; letter-spacing: -.04em; font-weight: 800; }
+    #level.TINGGI { color: var(--tinggi); } #level.SEDANG { color: var(--sedang); } #level.RENDAH { color: var(--rendah); } #level.AMAN { color: var(--aman); }
+    #meta { display: block; margin-top: 10px; color: var(--muted); }
+    .note { margin-top: 20px; padding-left: 14px; border-left: 2px solid var(--ink); color: var(--ink-2); }
+    .note .mono { display: block; color: var(--muted); margin-bottom: 4px; }
+    .note.loading p { color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; font-size: .9375rem; }
+    th { text-align: left; font-family: var(--mono); font-size: .6875rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 12px 8px 0; border-bottom: 1px solid var(--rule-strong); }
+    td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+    td:last-child, th:last-child { padding-right: 0; text-align: right; }
+    td.detail { color: var(--muted); font-family: var(--mono); font-size: .75rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .sev { display: inline-flex; gap: 3px; vertical-align: middle; }
+    .sev i { width: 8px; height: 12px; background: var(--rule); }
+    tr[data-sev="3"] .sev i { background: var(--tinggi); }
+    tr[data-sev="2"] .sev i:nth-child(-n+2) { background: var(--sedang); }
+    tr[data-sev="1"] .sev i:nth-child(1) { background: var(--rendah); }
+    @media (max-width: 520px) {
+      td.detail { white-space: normal; }
+      th:nth-child(3), td.detail { display: none; }
+      td small { display: block; color: var(--muted); font-family: var(--mono); font-size: .75rem; margin-top: 2px; }
+    }
+    @media (min-width: 521px) { td small { display: none; } }
+
+    .plates { display: grid; gap: 28px; margin-top: 40px; }
+    @media (min-width: 760px) { .plates { grid-template-columns: 1fr 1fr; gap: 24px; } }
+    figure { margin: 0; }
+    canvas { display: block; width: 100%; height: auto; outline: 1px solid var(--outline); outline-offset: -1px; background: var(--surface); }
+    figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 10px; border-top: 1px solid var(--rule-strong); margin-top: 12px; font-size: .875rem; }
+    figcaption .mono { color: var(--muted); }
+    #download { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; margin-top: 12px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: .9375rem; text-decoration: none;
+      transition-property: transform; transition-duration: 120ms; transition-timing-function: ease-out; }
+    #download:active { transform: scale(.97); }
+
+    footer { margin-top: 56px; padding: 16px 0 40px; border-top: 1px solid var(--rule); color: var(--muted); font-size: .8125rem; display: grid; gap: 6px; }
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition-duration: 0ms !important; } }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <p class="eyebrow">Kartika Cyber Hackathon 2026</p>
-      <h1>OPSEC Guard</h1>
-      <p class="lede">Periksa foto sebelum diunggah ke media sosial. AI mencari informasi yang bisa dimanfaatkan lawan, langsung di perangkat Anda. Foto tidak dikirim ke server.</p>
-      <ul class="checks" aria-label="Yang diperiksa">
-        <li>🎯 Senjata, kendaraan, dokumen</li>
-        <li>🔤 Tulisan rahasia & nama satuan</li>
-        <li>📍 Lokasi GPS di file foto</li>
-      </ul>
+  <div class="wrap">
+    <header class="bar">
+      <div class="mark">OPSEC Guard <span>/ Kartika Cyber Hackathon 2026</span></div>
+      <div class="mono" style="color: var(--muted)">Analisis di perangkat</div>
     </header>
 
-    <section id="picker" class="card" aria-labelledby="pick-title">
-      <label class="pick" id="drop">
-        <strong id="pick-title">📷 Ambil atau pilih foto</strong>
-        <span>Ketuk untuk memotret, atau seret foto ke sini</span>
+    <section class="intro">
+      <div>
+        <h1>Periksa dulu, baru unggah.</h1>
+        <p>Satu foto bisa membocorkan lokasi, kekuatan, dan kegiatan satuan. OPSEC Guard memeriksanya langsung di HP Anda. Foto tidak pernah dikirim ke server.</p>
+      </div>
+      <div class="scope" aria-label="Yang diperiksa">
+        <div><span class="mono">01</span><b>Objek</b><span>Senjata, kendaraan tempur, dokumen, peta, layar</span></div>
+        <div><span class="mono">02</span><b>Tulisan</b><span>Klasifikasi rahasia, nama satuan, pelat militer</span></div>
+        <div><span class="mono">03</span><b>Metadata</b><span>Koordinat GPS yang tersimpan di file foto</span></div>
+      </div>
+    </section>
+
+    <section aria-label="Pilih foto">
+      <label class="finder" id="drop">
         <input id="file" type="file" accept="image/*">
+        <div class="finder-body">
+          <h2><span class="fine">Seret foto ke sini</span><span class="touch">Ambil atau pilih foto</span></h2>
+          <p><span class="fine">atau pilih dari folder</span><span class="touch">dari kamera atau galeri</span></p>
+          <span class="cta">Pilih foto</span>
+        </div>
+        <div class="readout mono"><span id="status" role="status" aria-live="polite">Memuat model AI</span><span>JPG · PNG · HEIC</span></div>
+        <progress id="progress" max="1" value="0" aria-label="Memuat model AI"></progress>
       </label>
       <div class="samples">
-        <p>Belum punya foto? Coba contoh:</p>
+        <span class="mono">Contoh uji</span>
         <div class="sample-row">
-          <button class="sample" type="button" data-src="samples/dokumen-rahasia-gps.jpg"><img src="samples/dokumen-rahasia-gps.jpg" alt="" loading="lazy">Dokumen + GPS</button>
-          <button class="sample" type="button" data-src="samples/soldier-rifle-pd.jpg"><img src="samples/soldier-rifle-pd.jpg" alt="" loading="lazy">Prajurit bersenjata</button>
-          <button class="sample" type="button" data-src="samples/tank-pd.jpg"><img src="samples/tank-pd.jpg" alt="" loading="lazy">Kendaraan tempur</button>
+          <button class="sample" type="button" data-src="samples/dokumen-rahasia-gps.jpg"><img src="samples/dokumen-rahasia-gps.jpg" alt="" loading="lazy"><span class="mono">01</span><span>Dokumen + GPS</span></button>
+          <button class="sample" type="button" data-src="samples/soldier-rifle-pd.jpg"><img src="samples/soldier-rifle-pd.jpg" alt="" loading="lazy"><span class="mono">02</span><span>Prajurit bersenjata</span></button>
+          <button class="sample" type="button" data-src="samples/tank-pd.jpg"><img src="samples/tank-pd.jpg" alt="" loading="lazy"><span class="mono">03</span><span>Kendaraan tempur</span></button>
         </div>
-      </div>
-      <div class="status">
-        <progress id="progress" max="1" value="0" aria-label="Memuat model AI"></progress>
-        <span id="status" role="status" aria-live="polite">Memuat model AI…</span>
       </div>
     </section>
 
-    <section id="result" class="card" hidden aria-labelledby="verdict-title">
-      <div class="verdict">
-        <h2 id="verdict-title" tabindex="-1">Hasil pemeriksaan</h2>
-        <span id="level" class="badge"></span>
+    <section id="result" hidden aria-labelledby="level">
+      <div class="report-head">
+        <div class="verdict" id="verdict-title" tabindex="-1">
+          <span class="mono">Tingkat risiko</span>
+          <span id="level"></span>
+          <span id="meta" class="mono"></span>
+          <div id="explain-box" class="note" aria-live="polite">
+            <span class="mono">Penjelasan</span>
+            <p id="explain"></p>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th scope="col">Tingkat</th><th scope="col">Temuan</th><th scope="col">Rincian</th></tr></thead>
+          <tbody id="findings"></tbody>
+        </table>
       </div>
-      <ul id="findings"></ul>
-      <div id="explain-box" class="explain" aria-live="polite">
-        <h3>Penjelasan AI</h3>
-        <p id="explain"></p>
-      </div>
-      <div class="compare">
-        <div>
-          <h2>Temuan pada foto</h2>
+
+      <div class="plates">
+        <figure>
           <canvas id="annotated" aria-label="Foto dengan kotak penanda temuan"></canvas>
-        </div>
-        <div>
-          <h2>Versi aman untuk diunggah</h2>
+          <figcaption><span>Temuan pada foto asli</span><span class="mono">A</span></figcaption>
+        </figure>
+        <figure>
           <canvas id="safe" aria-label="Foto dengan bagian sensitif disamarkan dan lokasi GPS dihapus"></canvas>
-          <a id="download" class="btn" download="foto-aman.jpg">⬇ Unduh versi aman</a>
-        </div>
+          <figcaption><span>Versi aman: disamarkan, tanpa GPS</span><span class="mono">B</span></figcaption>
+          <a id="download" download="foto-aman.jpg">Unduh versi aman</a>
+        </figure>
       </div>
     </section>
 
-    <p class="privacy">Yang dikirim ke server hanya daftar jenis temuan (tanpa foto dan tanpa koordinat) untuk dibuatkan penjelasan. Foto contoh: buatan sendiri dan Wikimedia Commons (domain publik).</p>
-  </main>
+    <footer>
+      <p>Server hanya menerima daftar jenis temuan, tanpa foto dan tanpa koordinat, untuk menyusun penjelasan.</p>
+      <p>Foto contoh: buatan sendiri dan Wikimedia Commons (domain publik).</p>
+    </footer>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js" integrity="sha384-RPL/K8tc0JVaNWsunkEmCzLeieefvFX2UCRLKLmLVChCI6P+CTKhzqF7VIeCc3Zp" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" integrity="sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F" crossorigin="anonymous"></script>

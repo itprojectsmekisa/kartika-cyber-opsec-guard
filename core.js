@@ -67,6 +67,6 @@ export function assessRisk({ detections, classes, textHits, gps }) {
 
 export function explainFallback({ level, labels }) {
   if (level === 'AMAN') return 'Tidak ditemukan informasi sensitif. Tetap periksa latar belakang foto sebelum mengunggah.';
-  return `Risiko ${level}. Ditemukan: ${labels.join(', ')}. Informasi ini bisa dirangkai lawan untuk mengetahui lokasi, ` +
+  return `Ditemukan: ${labels.join(', ')}. Informasi ini bisa dirangkai lawan untuk mengetahui lokasi, ` +
     'kekuatan, atau kegiatan satuan. Jangan unggah foto asli; gunakan versi aman di bawah dan matikan lokasi pada kamera HP.';
 }

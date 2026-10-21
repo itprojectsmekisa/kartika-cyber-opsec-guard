@@ -39,5 +39,5 @@ test('assessRisk levels and GPS coordinates stay out of the shareable labels', (
   assert.equal(r.level, 'TINGGI');
   assert.ok(!JSON.stringify(r.labels).includes('106.8'));
   assert.equal(r.findings.find(f => f.label === 'Seragam').blur, false);
-  assert.match(explainFallback(r), /Risiko TINGGI/);
+  assert.match(explainFallback(r), /^Ditemukan: Senjata/);
 });

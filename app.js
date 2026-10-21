@@ -7,7 +7,7 @@ const status = (text) => { $('status').textContent = text; };
 
 const classes = await fetch('model/classes.json').then(r => r.json());
 const sessionPromise = loadModel();
-sessionPromise.then(() => { $('progress').hidden = true; status('Siap. Pilih foto atau coba contoh.'); },
+sessionPromise.then(() => { $('progress').hidden = true; status('Siap'); },
   (e) => status(`Model gagal dimuat: ${e.message}. Muat ulang halaman untuk mencoba lagi.`));
 
 // shortcut: whole model (~50 MB) downloads on first visit, fine for demo on Wi-Fi; switch to a trained YOLO11n (~10 MB) after week 2.
@@ -20,7 +20,7 @@ async function loadModel() {
     const done = loaded.reduce((a, b) => a + b, 0), all = total.reduce((a, b) => a + b, 0);
     if (!all) return;
     $('progress').value = done / all;
-    status(`Memuat model AI… ${Math.round((done / all) * 100)}% (sekali saja, lalu tersimpan di browser)`);
+    status(`Memuat model AI · ${Math.round((done / all) * 100)}%`);
   };
   const parts = await Promise.all([...Array(count).keys()].map(async (i) => {
     const res = await fetch(`model/model.onnx.part${i}`);
@@ -40,7 +40,7 @@ async function loadModel() {
   const flat = parts.flat();
   const model = new Uint8Array(flat.reduce((n, c) => n + c.length, 0));
   flat.reduce((offset, c) => (model.set(c, offset), offset + c.length), 0);
-  status('Menyiapkan model AI…');
+  status('Menyiapkan model AI');
   return ort.InferenceSession.create(model, { executionProviders: ['wasm'] });
 }
 
@@ -79,13 +79,14 @@ drop.addEventListener('drop', (e) => {
 });
 
 async function analyze(file) {
-  status('Membaca foto…');
+  const t0 = performance.now();
+  status('Membaca foto');
   const bitmap = await createImageBitmap(file);
   const k = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
   const base = canvas(Math.round(bitmap.width * k), Math.round(bitmap.height * k));
   base.getContext('2d').drawImage(bitmap, 0, 0, base.width, base.height);
 
-  status('Menganalisis: deteksi objek, membaca tulisan, memeriksa lokasi GPS…');
+  status('Menganalisis objek, tulisan, metadata');
   const [detections, words, gps] = await Promise.all([
     detect(base),
     Tesseract.recognize(base, 'ind+eng').then(r => r.data.words),
@@ -94,7 +95,9 @@ async function analyze(file) {
 
   const result = assessRisk({ detections, classes, textHits: matchText(words), gps });
   render(base, result);
-  status(`Selesai: ${result.findings.length} temuan.`);
+  const secs = ((performance.now() - t0) / 1000).toFixed(1).replace('.', ',');
+  $('meta').textContent = `${result.findings.length} temuan · ${secs} dtk · di perangkat`;
+  status(`Selesai · ${result.findings.length} temuan`);
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   $('verdict-title').focus({ preventScroll: true });
   $('explain-box').classList.add('loading');
@@ -127,15 +130,25 @@ async function detect(base) {
 
 function render(base, { level, findings }) {
   $('result').hidden = false;
-  $('level').textContent = `RISIKO ${level}`;
-  $('level').className = `badge ${level}`;
+  $('level').textContent = level;
+  $('level').className = level;
   const sorted = [...findings].sort((x, y) => y.severity - x.severity);
-  $('findings').replaceChildren(...(sorted.length ? sorted : [{ label: 'Tidak ada temuan', detail: '' }]).map(f => {
-    const li = document.createElement('li');
-    li.dataset.sev = f.severity ?? 0;
-    li.append(f.label, ' ');
-    li.appendChild(document.createElement('small')).textContent = f.detail;
-    return li;
+  const SEV = ['', 'Rendah', 'Sedang', 'Tinggi'];
+  $('findings').replaceChildren(...(sorted.length ? sorted : [{ label: 'Tidak ada temuan', detail: '', severity: 0 }]).map(f => {
+    const tr = document.createElement('tr');
+    tr.dataset.sev = f.severity;
+    const sev = tr.insertCell();
+    sev.innerHTML = '<span class="sev" aria-hidden="true"><i></i><i></i><i></i></span>';
+    sev.append(' ', SEV[f.severity] ? '' : '—');
+    sev.title = SEV[f.severity] || '';
+    sev.setAttribute('aria-label', SEV[f.severity] || 'Tidak ada');
+    const what = tr.insertCell();
+    what.textContent = f.label;
+    what.appendChild(document.createElement('small')).textContent = f.detail;
+    const detail = tr.insertCell();
+    detail.className = 'detail';
+    detail.textContent = f.detail;
+    return tr;
   }));
 
   const annotated = copyInto($('annotated'), base);
@@ -144,7 +157,7 @@ function render(base, { level, findings }) {
   const size = Math.max(14, base.width / 50);
   a.font = `600 ${size}px system-ui`;
   for (const f of findings.filter(f => f.box)) {
-    const color = f.severity >= 3 ? '#e53935' : f.severity === 2 ? '#fb8c00' : '#fdd835';
+    const color = f.severity >= 3 ? '#c4321c' : f.severity === 2 ? '#b87100' : '#5d6f22';
     a.strokeStyle = color;
     a.strokeRect(f.box.x, f.box.y, f.box.w, f.box.h);
     // Label on a solid tag so it stays readable on busy photos.
@@ -152,7 +165,7 @@ function render(base, { level, findings }) {
     const y = f.box.y >= h ? f.box.y - h : f.box.y;
     a.fillStyle = color;
     a.fillRect(f.box.x, y, w, h);
-    a.fillStyle = f.severity === 1 ? '#000' : '#fff';
+    a.fillStyle = '#fff';
     a.fillText(f.label, f.box.x + pad, y + pad + size * 0.85);
   }
 
